@@ -52,6 +52,10 @@ todoForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = todoInput.value.trim();
   if (!text) return;
+  if (todos.some(t => t.text.toLowerCase() === text.toLowerCase())) {
+    alert(`Todo "${text}" already exists.`);
+    return;
+  }
   todos.unshift({ id: Date.now().toString(), text, completed: false });
   todoInput.value = '';
   todoInput.focus();
@@ -123,7 +127,7 @@ habitForm.addEventListener('submit', (e) => {
   const name = habitInput.value.trim();
   if (!name) return;
   if (habits.some(h => h.name.toLowerCase() === name.toLowerCase())) {
-    alert('Habit already exists');
+    alert(`Habit "${name}" already exists.`);
     return;
   }
   habits.unshift({ id: Date.now().toString(), name, streak: 0, lastDone: null });
