@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <script>
+    (function () {
+      var savedTheme = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
+    })();
+  </script>
+  <link rel="icon" href="../portfolio/assets/images/favicon.png" />
+  <title>Daily Tracker | Todos + Habits</title>
+  <meta name="description" content="Minimal daily tracker for todos and habits.">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./app.js"></script>
+</head>
+
+<body>
+  <div class="navbar">
+    <a class="nav-title" href="./index.html">Daily Tracker</a>
+    <div class="nav-right">
+      <label class="theme-toggle" for="theme-switch" title="Toggle dark mode">
+        <input type="checkbox" id="theme-switch">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </label>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <header class="app-header">
+      <h1 class="main-title">Todos + Habits</h1>
+      <p class="body-text">Minimal MVP. Add tasks for today, track habits and streaks. Data saved in your browser.</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="todos">Todos</button>
+      <button class="tab-btn" data-tab="habits">Habits</button>
+    </div>
+
+    <!-- TODOS PANEL -->
+    <section id="todos-panel" class="panel active">
+      <form id="todo-form" class="input-row">
+        <input id="todo-input" type="text" placeholder="Add a task... (e.g., Study JS 30m)" maxlength="80"
+          autocomplete="off">
+        <button type="submit" class="button"><span class="button-text">Add</span></button>
+      </form>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="completed">Done</button>
+        <span id="todo-stats" class="stats"></span>
+      </div>
+      <ul id="todo-list" class="item-list"></ul>
+      <p id="todo-empty" class="empty-text">No tasks yet. Add one above.</p>
+      <button id="clear-completed" class="icon-btn" style="align-self:flex-end; font-size:13px; opacity:0.7;">Clear done</button>
+    </section>
+
+    <!-- HABITS PANEL -->
+    <section id="habits-panel" class="panel">
+      <form id="habit-form" class="input-row">
+        <input id="habit-input" type="text" placeholder="New habit... (e.g., Drink water)" maxlength="40"
+          autocomplete="off">
+        <button type="submit" class="button"><span class="button-text">Add</span></button>
+      </form>
+      <p class="hint">Check off once per day. Streak increases when you hit consecutive days.</p>
+      <ul id="habit-list" class="item-list"></ul>
+      <p id="habit-empty" class="empty-text">No habits yet. Add one to start your streak.</p>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <span class="footer-copyright">Daily Tracker MVP — vanilla HTML/CSS/JS + localStorage</span>
+  </footer>
+</body>
+
+</html>
