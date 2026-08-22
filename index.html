@@ -63,9 +63,17 @@
       <button id="clear-completed" class="icon-btn" style="align-self:flex-end; font-size:13px; opacity:0.7;">Clear done</button>
     </section>
 
-    <!-- HABITS PANEL — auto-derived from completed todos -->
+    <!-- HABITS PANEL -->
     <section id="habits-panel" class="panel">
-      <p class="hint">Habits are auto-created when you complete a todo. Complete the same todo again tomorrow to grow your streak. No manual add.</p>
+      <form id="habit-form" class="input-row">
+        <input id="habit-input" type="text" placeholder="New habit... (e.g., Drink water)" maxlength="40" autocomplete="off">
+        <input id="habit-duration" type="number" placeholder="15" min="1" max="999" style="width:90px;">
+        <select id="habit-unit" style="border:2px solid var(--border-color); border-radius:50px; padding:0 8px; background:var(--bg-color); color:var(--text-color);">
+          <option value="m">min</option><option value="h">hr</option>
+        </select>
+        <button type="submit" class="button"><span class="button-text">Add</span></button>
+      </form>
+      <p class="hint">Check off once per day. Streak increases when you hit consecutive days.</p>
       <ul id="habit-list" class="item-list"></ul>
       <p id="habit-empty" class="empty-text">No habits yet. Add one to start your streak.</p>
     </section>

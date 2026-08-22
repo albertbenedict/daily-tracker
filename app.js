@@ -110,7 +110,6 @@ function renderTodos() {
     cb.addEventListener('change', () => {
       todo.completed = cb.checked;
       saveJSON(TODO_KEY, todos);
-      if (todo.completed) upsertHabitFromTodo(todo.text, todo.duration, todo.unit);
       renderTodos();
     });
     li.querySelector('.icon-btn').addEventListener('click', () => {
@@ -123,26 +122,33 @@ function renderTodos() {
 }
 
 // --- HABITS ---
-// habit: {id, name, streak, lastDone: 'YYYY-MM-DD'|null} — auto-derived from todos
+// habit: {id, name, streak, lastDone: 'YYYY-MM-DD'|null}
 let habits = loadJSON(HABIT_KEY, []);
 
+const habitForm = document.getElementById('habit-form');
+const habitInput = document.getElementById('habit-input');
+const habitDuration = document.getElementById('habit-duration');
+const habitUnit = document.getElementById('habit-unit');
 const habitList = document.getElementById('habit-list');
 const habitEmpty = document.getElementById('habit-empty');
 
-function upsertHabitFromTodo(todoText, todoDuration, todoUnit) {
-  const name = todoText.trim();
+habitForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = habitInput.value.trim();
+  const hDurVal = habitDuration.value ? parseInt(habitDuration.value, 10) : null;
+  const hUnitVal = habitUnit.value;
   if (!name) return;
-  let habit = habits.find(h => h.name.toLowerCase() === name.toLowerCase());
-  if (habit) {
-    // if not already done today, mark done and handle streak
-    if (!isDoneToday(habit)) toggleHabitToday(habit);
-  } else {
-    habit = { id: Date.now().toString(), name, streak: 1, lastDone: getTodayString(), duration: todoDuration || null, unit: todoUnit || 'm' };
-    habits.unshift(habit);
-    saveJSON(HABIT_KEY, habits);
-    renderHabits();
+  if (habits.some(h => h.name.toLowerCase() === name.toLowerCase())) {
+    alert(`Habit "${name}" already exists.`);
+    return;
   }
-}
+  habits.unshift({ id: Date.now().toString(), name, streak: 0, lastDone: null, duration: hDurVal, unit: hUnitVal });
+  habitInput.value = '';
+  habitDuration.value = '';
+  habitInput.focus();
+  saveJSON(HABIT_KEY, habits);
+  renderHabits();
+});
 
 function isDoneToday(h) { return h.lastDone === getTodayString(); }
 
