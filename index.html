@@ -45,6 +45,10 @@
       <form id="todo-form" class="input-row">
         <input id="todo-input" type="text" placeholder="Add a task... (e.g., Study JS 30m)" maxlength="80"
           autocomplete="off">
+        <input id="todo-duration" type="number" placeholder="30" min="1" max="999" style="width:90px;">
+        <select id="todo-unit" style="border: 2px solid var(--border-color); border-radius:50px; padding:0 8px; background:var(--bg-color); color:var(--text-color);">
+          <option value="m">min</option><option value="h">hr</option>
+        </select>
         <button type="submit" class="button"><span class="button-text">Add</span></button>
       </form>
 
