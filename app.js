@@ -43,6 +43,8 @@ let todoFilter = 'all';
 
 const todoForm = document.getElementById('todo-form');
 const todoInput = document.getElementById('todo-input');
+const todoDuration = document.getElementById('todo-duration');
+const todoUnit = document.getElementById('todo-unit');
 const todoList = document.getElementById('todo-list');
 const todoEmpty = document.getElementById('todo-empty');
 const todoStats = document.getElementById('todo-stats');
@@ -51,13 +53,16 @@ const filterBtns = document.querySelectorAll('.filter-btn[data-filter]');
 todoForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = todoInput.value.trim();
+  const durVal = todoDuration.value ? parseInt(todoDuration.value, 10) : null;
+  const unitVal = todoUnit.value;
   if (!text) return;
   if (todos.some(t => t.text.toLowerCase() === text.toLowerCase())) {
     alert(`Todo "${text}" already exists.`);
     return;
   }
-  todos.unshift({ id: Date.now().toString(), text, completed: false });
+  todos.unshift({ id: Date.now().toString(), text, completed: false, duration: durVal, unit: unitVal });
   todoInput.value = '';
+  todoDuration.value = '';
   todoInput.focus();
   saveJSON(TODO_KEY, todos);
   renderTodos();
@@ -92,16 +97,20 @@ function renderTodos() {
   filtered.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'item';
+    const durLabel = todo.duration ? ` • ${todo.duration}${todo.unit || 'm'}` : '';
     li.innerHTML = `
       <input type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="toggle">
       <span class="item-text ${todo.completed ? 'done' : ''}"></span>
+      <span class="item-meta">${durLabel}</span>
       <button class="icon-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = todo.text;
+    li.querySelector('.item-meta').textContent = durLabel ? durLabel.trim().slice(2) : '';
     const cb = li.querySelector('input');
     cb.addEventListener('change', () => {
       todo.completed = cb.checked;
       saveJSON(TODO_KEY, todos);
+      if (todo.completed) upsertHabitFromTodo(todo.text, todo.duration, todo.unit);
       renderTodos();
     });
     li.querySelector('.icon-btn').addEventListener('click', () => {
@@ -114,28 +123,26 @@ function renderTodos() {
 }
 
 // --- HABITS ---
-// habit: {id, name, streak, lastDone: 'YYYY-MM-DD'|null}
+// habit: {id, name, streak, lastDone: 'YYYY-MM-DD'|null} — auto-derived from todos
 let habits = loadJSON(HABIT_KEY, []);
 
-const habitForm = document.getElementById('habit-form');
-const habitInput = document.getElementById('habit-input');
 const habitList = document.getElementById('habit-list');
 const habitEmpty = document.getElementById('habit-empty');
 
-habitForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const name = habitInput.value.trim();
+function upsertHabitFromTodo(todoText, todoDuration, todoUnit) {
+  const name = todoText.trim();
   if (!name) return;
-  if (habits.some(h => h.name.toLowerCase() === name.toLowerCase())) {
-    alert(`Habit "${name}" already exists.`);
-    return;
+  let habit = habits.find(h => h.name.toLowerCase() === name.toLowerCase());
+  if (habit) {
+    // if not already done today, mark done and handle streak
+    if (!isDoneToday(habit)) toggleHabitToday(habit);
+  } else {
+    habit = { id: Date.now().toString(), name, streak: 1, lastDone: getTodayString(), duration: todoDuration || null, unit: todoUnit || 'm' };
+    habits.unshift(habit);
+    saveJSON(HABIT_KEY, habits);
+    renderHabits();
   }
-  habits.unshift({ id: Date.now().toString(), name, streak: 0, lastDone: null });
-  habitInput.value = '';
-  habitInput.focus();
-  saveJSON(HABIT_KEY, habits);
-  renderHabits();
-});
+}
 
 function isDoneToday(h) { return h.lastDone === getTodayString(); }
 
@@ -170,10 +177,11 @@ function renderHabits() {
     const done = isDoneToday(h);
     const li = document.createElement('li');
     li.className = 'item';
+    const hDur = h.duration ? `${h.duration}${h.unit || 'm'} • ` : '';
     li.innerHTML = `
       <input type="checkbox" ${done ? 'checked' : ''} aria-label="mark done today">
       <span class="item-text ${done ? 'done' : ''}"></span>
-      <span class="item-meta">🔥 ${h.streak} day${h.streak !== 1 ? 's' : ''}</span>
+      <span class="item-meta">${hDur}🔥 ${h.streak} day${h.streak !== 1 ? 's' : ''}</span>
       <button class="icon-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = h.name;
