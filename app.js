@@ -4,10 +4,17 @@ const TODO_KEY = 'daily-tracker-todos';
 const HABIT_KEY = 'daily-tracker-habits';
 
 // --- helpers ---
+const toMinutes = (val, unit) => Math.round(parseFloat(val) * (unit === 'h' ? 60 : 1));
+const formatDuration = (mins) => {
+  if (!mins) return '';
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
+};
+
 function getTodayString() {
   // YYYY-MM-DD in local time, easy to compare
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
