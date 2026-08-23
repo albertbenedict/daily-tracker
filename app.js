@@ -46,6 +46,13 @@ tabBtns.forEach(btn => {
 
 // --- TODOS ---
 let todos = loadJSON(TODO_KEY, []); // {id, text, completed}
+todos = todos.map(t => {
+  if (t.duration != null && t.unit && !t.durationConverted) {
+    const isH = t.unit === 'h';
+    return { ...t, duration: isH ? t.duration*60 : t.duration, unit: undefined };
+  }
+  return t;
+});
 let todoFilter = 'all';
 
 const todoForm = document.getElementById('todo-form');
@@ -60,14 +67,15 @@ const filterBtns = document.querySelectorAll('.filter-btn[data-filter]');
 todoForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = todoInput.value.trim();
-  const durVal = todoDuration.value ? parseInt(todoDuration.value, 10) : null;
-  const unitVal = todoUnit.value;
+  const unitVal = todoUnit.value; // move before use
+  const raw = todoDuration.value ? parseFloat(todoDuration.value) : null;
+  const mins = raw ? toMinutes(raw, unitVal) : null;
   if (!text) return;
   if (todos.some(t => t.text.toLowerCase() === text.toLowerCase())) {
     alert(`Todo "${text}" already exists.`);
     return;
   }
-  todos.unshift({ id: Date.now().toString(), text, completed: false, duration: durVal, unit: unitVal });
+  todos.unshift({ id: Date.now().toString(), text, completed: false, duration: mins });
   todoInput.value = '';
   todoDuration.value = '';
   todoInput.focus();
@@ -104,7 +112,7 @@ function renderTodos() {
   filtered.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'item';
-    const durLabel = todo.duration ? ` • ${todo.duration}${todo.unit || 'm'}` : '';
+    const durLabel = formatDuration(todo.duration) ? ` • ${formatDuration(todo.duration)}` : '';
     li.innerHTML = `
       <input type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="toggle">
       <span class="item-text ${todo.completed ? 'done' : ''}"></span>
@@ -129,8 +137,12 @@ function renderTodos() {
 }
 
 // --- HABITS ---
-// habit: {id, name, streak, lastDone: 'YYYY-MM-DD'|null}
+// habit: {id, name, completedDates: [], duration}
 let habits = loadJSON(HABIT_KEY, []);
+habits = habits.map(h => {
+  if (Array.isArray(h.completedDates)) return h;
+  return { id: h.id, name: h.name, completedDates: h.lastDone ? [h.lastDone] : [], duration: h.duration || null, unit: h.unit || 'm' };
+});
 
 const habitForm = document.getElementById('habit-form');
 const habitInput = document.getElementById('habit-input');
@@ -142,14 +154,15 @@ const habitEmpty = document.getElementById('habit-empty');
 habitForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const name = habitInput.value.trim();
-  const hDurVal = habitDuration.value ? parseInt(habitDuration.value, 10) : null;
   const hUnitVal = habitUnit.value;
+  const hRaw = habitDuration.value ? parseFloat(habitDuration.value) : null;
+  const hMins = hRaw ? toMinutes(hRaw, hUnitVal) : null;
   if (!name) return;
   if (habits.some(h => h.name.toLowerCase() === name.toLowerCase())) {
     alert(`Habit "${name}" already exists.`);
     return;
   }
-  habits.unshift({ id: Date.now().toString(), name, streak: 0, lastDone: null, duration: hDurVal, unit: hUnitVal });
+  habits.unshift({ id: Date.now().toString(), name, completedDates: [], duration: hMins, });
   habitInput.value = '';
   habitDuration.value = '';
   habitInput.focus();
@@ -157,30 +170,29 @@ habitForm.addEventListener('submit', (e) => {
   renderHabits();
 });
 
-function isDoneToday(h) { return h.lastDone === getTodayString(); }
+function isDoneToday(h) { return h.completedDates.includes(getTodayString()); }
 
 function toggleHabitToday(habit) {
   const today = getTodayString();
   if (isDoneToday(habit)) {
     // undo today — decrement streak, clear lastDone to yesterday logic simplified
-    habit.lastDone = null;
-    habit.streak = Math.max(0, habit.streak - 1);
+    habit.completedDates = habit.completedDates.filter(d => d !== today);
   } else {
-    // check if consecutive: if lastDone was yesterday, increment, else start at 1
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    const yStr = yesterday.toISOString().slice(0, 10);
-    if (habit.lastDone === yStr) habit.streak += 1;
-    else if (habit.lastDone === today) { /* already done */ }
-    else habit.streak = habit.streak === 0 ? 1 : habit.streak + 1;
-    // Correction: if gap >1 day and streak>0, reset to 1
-    // We detect gap by not yesterday and not null
-    if (habit.lastDone && habit.lastDone !== yStr && habit.lastDone !== today) {
-      habit.streak = 1;
-    }
-    habit.lastDone = today;
+    habit.completedDates.push(today);
   }
   saveJSON(HABIT_KEY, habits);
   renderHabits();
+}
+
+function getStreak(h) {
+  const set = new Set(h.completedDates);
+  let streak = 0, d = new Date();
+  while (true) {
+    const s = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    if (set.has(s)) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
 }
 
 function renderHabits() {
@@ -190,11 +202,11 @@ function renderHabits() {
     const done = isDoneToday(h);
     const li = document.createElement('li');
     li.className = 'item';
-    const hDur = h.duration ? `${h.duration}${h.unit || 'm'} • ` : '';
+    const hDur = formatDuration(h.duration) ? `${formatDuration(h.duration)} • ` : '';
     li.innerHTML = `
       <input type="checkbox" ${done ? 'checked' : ''} aria-label="mark done today">
       <span class="item-text ${done ? 'done' : ''}"></span>
-      <span class="item-meta">${hDur}🔥 ${h.streak} day${h.streak !== 1 ? 's' : ''}</span>
+      <span class="item-meta">${hDur}🔥 ${getStreak(h)} day${getStreak(h) !== 1 ? 's' : ''}</span>
       <button class="icon-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = h.name;
