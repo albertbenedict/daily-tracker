@@ -49,7 +49,7 @@ let todos = loadJSON(TODO_KEY, []); // {id, text, completed}
 todos = todos.map(t => {
   if (t.duration != null && t.unit && !t.durationConverted) {
     const isH = t.unit === 'h';
-    return { ...t, duration: isH ? t.duration*60 : t.duration, unit: undefined };
+    return { ...t, duration: isH ? t.duration * 60 : t.duration, unit: undefined };
   }
   return t;
 });
@@ -117,17 +117,27 @@ function renderTodos() {
       <input type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="toggle">
       <span class="item-text ${todo.completed ? 'done' : ''}"></span>
       <span class="item-meta">${durLabel}</span>
-      <button class="icon-btn" title="Delete">×</button>
+      <button class="icon-btn habit-btn" title="Make habit">↻</button>
+      <button class="icon-btn delete-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = todo.text;
     li.querySelector('.item-meta').textContent = durLabel ? durLabel.trim().slice(2) : '';
+    li.querySelector('.habit-btn').addEventListener('click', () => { // app.js:124 new
+      if (habits.some(h => h.name.toLowerCase() === todo.text.toLowerCase())) {
+        alert(`Habit "${todo.text}" already exists.`);
+        return;
+      }
+      habits.unshift({ id: Date.now().toString(), name: todo.text, completedDates: [], duration: todo.duration });
+      saveJSON(HABIT_KEY, habits);
+      renderHabits();
+    });
     const cb = li.querySelector('input');
     cb.addEventListener('change', () => {
       todo.completed = cb.checked;
       saveJSON(TODO_KEY, todos);
       renderTodos();
     });
-    li.querySelector('.icon-btn').addEventListener('click', () => {
+    li.querySelector('.delete-btn').addEventListener('click', () => {
       todos = todos.filter(t => t.id !== todo.id);
       saveJSON(TODO_KEY, todos);
       renderTodos();
