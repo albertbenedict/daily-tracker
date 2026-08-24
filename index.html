@@ -32,7 +32,7 @@
   <main id="main-content">
     <header class="app-header">
       <h1 class="main-title">Todos + Habits</h1>
-      <p class="body-text">Minimal MVP. Add tasks for today, track habits and streaks. Data saved in your browser.</p>
+      <p class="body-text">Add tasks for today, track habits and streaks. Data saved in your browser.</p>
     </header>
 
     <div class="tabs">
@@ -43,11 +43,12 @@
     <!-- TODOS PANEL -->
     <section id="todos-panel" class="panel active">
       <form id="todo-form" class="input-row">
-        <input id="todo-input" type="text" placeholder="Add a task... (e.g., Study JS 30m)" maxlength="80"
+        <input id="todo-input" type="text" placeholder="Add a task..." maxlength="80" autocomplete="off">
+        <input id="todo-duration" class="duration-input" type="number" placeholder="Duration (Optional)" min="1" max="999"
           autocomplete="off">
-        <input id="todo-duration" type="number" placeholder="30" min="1" max="999" style="width:90px;">
-        <select id="todo-unit" style="border: 2px solid var(--border-color); border-radius:50px; padding:0 8px; background:var(--bg-color); color:var(--text-color);">
-          <option value="m">min</option><option value="h">hr</option>
+        <select id="todo-unit" class="unit-select">
+          <option value="m">min</option>
+          <option value="h">hr</option>
         </select>
         <button type="submit" class="button"><span class="button-text">Add</span></button>
       </form>
@@ -60,16 +61,20 @@
       </div>
       <ul id="todo-list" class="item-list"></ul>
       <p id="todo-empty" class="empty-text">No tasks yet. Add one above.</p>
-      <button id="clear-completed" class="icon-btn" style="align-self:flex-end; font-size:13px; opacity:0.7;">Clear done</button>
+      <button id="clear-completed" class="icon-btn" style="align-self:flex-end; font-size:13px; opacity:0.7;">Clear
+        done</button>
     </section>
 
     <!-- HABITS PANEL -->
     <section id="habits-panel" class="panel">
       <form id="habit-form" class="input-row">
-        <input id="habit-input" type="text" placeholder="New habit... (e.g., Drink water)" maxlength="40" autocomplete="off">
-        <input id="habit-duration" type="number" placeholder="15" min="1" max="999" style="width:90px;">
-        <select id="habit-unit" style="border:2px solid var(--border-color); border-radius:50px; padding:0 8px; background:var(--bg-color); color:var(--text-color);">
-          <option value="m">min</option><option value="h">hr</option>
+        <input id="habit-input" type="text" placeholder="Add a habit..." maxlength="40"
+          autocomplete="off">
+        <input id="habit-duration" class="duration-input" type="number" placeholder="Duration (Optional)" min="1" max="999"
+          autocomplete="off">
+        <select id="habit-unit" class="unit-select">
+          <option value="m">min</option>
+          <option value="h">hr</option>
         </select>
         <button type="submit" class="button"><span class="button-text">Add</span></button>
       </form>
@@ -80,7 +85,7 @@
   </main>
 
   <footer id="footer">
-    <span class="footer-copyright">Daily Tracker MVP — vanilla HTML/CSS/JS + localStorage</span>
+    <span class="footer-copyright">Daily Tracker — vanilla HTML/CSS/JS + localStorage</span>
   </footer>
 </body>
 

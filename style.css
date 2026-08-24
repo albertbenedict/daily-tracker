@@ -90,6 +90,11 @@ body {
   outline: none;
 }
 .input-row input:focus { border-color: var(--text-color); }
+.input-row .duration-input { flex:0 0 190px !important; min-width:190px !important; max-width:190px; }
+.input-row .unit-select { flex:0 0 70px !important; min-width:70px !important; }
+.duration-input::-webkit-outer-spin-button, .duration-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.unit-select { flex:0 0 78px; min-width:78px; padding:10px 10px; border:2px solid var(--border-color); border-radius:50px; background:var(--bg-color); color:var(--text-color); }
+
 .button {
   padding: 8px 16px;
   border: 2px solid var(--border-color);
