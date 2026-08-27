@@ -16,6 +16,22 @@ function getTodayString() {
   const d = new Date();
   return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
+function getDueLabel(dateStr) {
+  if (!dateStr) return '';
+  const today = getTodayString();
+  const t = new Date(); t.setDate(t.getDate() + 1);
+  const tomorrow = new Date(t - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  if (dateStr === today) return 'Today';
+  if (dateStr === tomorrow) return 'Tomorrow';
+  const diff = (new Date(dateStr) - new Date(today)) / 86400000;
+  if (diff < 0) return 'Overdue';
+  if (diff < 7) return 'This week';
+  return 'Later';
+}
+function getTomorrowString() {
+  const t = new Date(); t.setDate(t.getDate() + 1);
+  return new Date(t - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 function loadJSON(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
 }
@@ -54,11 +70,13 @@ todos = todos.map(t => {
   return t;
 });
 let todoFilter = 'all';
+todos = todos.map(t => t.dueDate ? t : { ...t, dueDate: getTodayString() });
 
 const todoForm = document.getElementById('todo-form');
 const todoInput = document.getElementById('todo-input');
 const todoDuration = document.getElementById('todo-duration');
 const todoUnit = document.getElementById('todo-unit');
+const todoDate = document.getElementById('todo-date');
 const todoList = document.getElementById('todo-list');
 const todoEmpty = document.getElementById('todo-empty');
 const todoStats = document.getElementById('todo-stats');
@@ -70,14 +88,16 @@ todoForm.addEventListener('submit', (e) => {
   const unitVal = todoUnit.value; // move before use
   const raw = todoDuration.value ? parseFloat(todoDuration.value) : null;
   const mins = raw ? toMinutes(raw, unitVal) : null;
+  const dueDate = todoDate.value || getTodayString();
   if (!text) return;
-  if (todos.some(t => t.text.toLowerCase() === text.toLowerCase())) {
-    alert(`Todo "${text}" already exists.`);
+  if (todos.some(t => t.text.toLowerCase() === text.toLowerCase() && t.dueDate === dueDate)) {
+    alert(`Todo "${text}" already exists for ${getDueLabel(dueDate)}.`);
     return;
   }
-  todos.unshift({ id: Date.now().toString(), text, completed: false, duration: mins });
+  todos.unshift({ id: Date.now().toString(), text, completed: false, duration: mins, dueDate });
   todoInput.value = '';
   todoDuration.value = '';
+  todoDate.value = '';
   todoInput.focus();
   saveJSON(TODO_KEY, todos);
   renderTodos();
@@ -112,16 +132,18 @@ function renderTodos() {
   filtered.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'item';
-    const durLabel = formatDuration(todo.duration) ? ` • ${formatDuration(todo.duration)}` : '';
+    const dueLabel = getDueLabel(todo.dueDate);
+    const durLabel = formatDuration(todo.duration) ? `${formatDuration(todo.duration)}` : '';
+    const metaParts = [dueLabel, durLabel].filter(Boolean).join(' • ');
     li.innerHTML = `
       <input type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="toggle">
       <span class="item-text ${todo.completed ? 'done' : ''}"></span>
-      <span class="item-meta">${durLabel}</span>
+      <span class="item-meta">${metaParts}</span>
       <button class="icon-btn habit-btn" title="Make habit">↻</button>
       <button class="icon-btn delete-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = todo.text;
-    li.querySelector('.item-meta').textContent = durLabel ? durLabel.trim().slice(2) : '';
+    li.querySelector('.item-meta').textContent = metaParts;
     li.querySelector('.habit-btn').addEventListener('click', () => { // app.js:124 new
       if (habits.some(h => h.name.toLowerCase() === todo.text.toLowerCase())) {
         alert(`Habit "${todo.text}" already exists.`);
@@ -217,11 +239,23 @@ function renderHabits() {
       <input type="checkbox" ${done ? 'checked' : ''} aria-label="mark done today">
       <span class="item-text ${done ? 'done' : ''}"></span>
       <span class="item-meta">${hDur}🔥 ${getStreak(h)} day${getStreak(h) !== 1 ? 's' : ''}</span>
+      <button class="icon-btn todo-btn" title="Add to todos (tomorrow)">→ Todo</button>
       <button class="icon-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = h.name;
     li.querySelector('input').addEventListener('change', () => toggleHabitToday(h));
-    li.querySelector('.icon-btn').addEventListener('click', () => {
+    li.querySelector('.todo-btn').addEventListener('click', () => {
+      const tomorrow = getTomorrowString();
+      if (todos.some(t => t.text.toLowerCase() === h.name.toLowerCase() && t.dueDate === tomorrow)) {
+        alert(`Todo "${h.name}" already exists for Tomorrow.`);
+        return;
+      }
+      todos.unshift({ id: Date.now().toString(), text: h.name, completed: false, duration: h.duration, dueDate: tomorrow });
+      saveJSON(TODO_KEY, todos);
+      renderTodos();
+      alert(`Added "${h.name}" to Tomorrow's todos.`);
+    });
+    li.querySelector('.icon-btn:last-child').addEventListener('click', () => {
       habits = habits.filter(x => x.id !== h.id);
       saveJSON(HABIT_KEY, habits);
       renderHabits();

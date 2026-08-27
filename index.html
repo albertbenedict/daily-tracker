@@ -44,12 +44,12 @@
     <section id="todos-panel" class="panel active">
       <form id="todo-form" class="input-row">
         <input id="todo-input" type="text" placeholder="Add a task..." maxlength="80" autocomplete="off">
-        <input id="todo-duration" class="duration-input" type="number" placeholder="Duration (Optional)" min="1" max="999"
-          autocomplete="off">
+        <input id="todo-duration" class="duration-input" type="number" placeholder="30" min="1" max="999" autocomplete="off">
         <select id="todo-unit" class="unit-select">
           <option value="m">min</option>
           <option value="h">hr</option>
         </select>
+        <input id="todo-date" type="date" style="border:2px solid var(--border-color); border-radius:50px; padding:10px; background:var(--bg-color); color:var(--text-color); flex:0 0 140px;">
         <button type="submit" class="button"><span class="button-text">Add</span></button>
       </form>
 
