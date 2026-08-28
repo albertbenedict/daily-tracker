@@ -133,26 +133,34 @@ function renderTodos() {
     const li = document.createElement('li');
     li.className = 'item';
     const dueLabel = getDueLabel(todo.dueDate);
-    const durLabel = formatDuration(todo.duration) ? `${formatDuration(todo.duration)}` : '';
-    const metaParts = [dueLabel, durLabel].filter(Boolean).join(' • ');
+    const durText = formatDuration(todo.duration);
+    const isHabit = habits.some(h => h.name.toLowerCase() === todo.text.toLowerCase());
     li.innerHTML = `
       <input type="checkbox" ${todo.completed ? 'checked' : ''} aria-label="toggle">
       <span class="item-text ${todo.completed ? 'done' : ''}"></span>
-      <span class="item-meta">${metaParts}</span>
-      <button class="icon-btn habit-btn" title="Make habit">↻</button>
+      <div class="pill-group"></div>
+      <button class="icon-btn habit-btn" title="Make habit">→ Habit</button>
       <button class="icon-btn delete-btn" title="Delete">×</button>
     `;
     li.querySelector('.item-text').textContent = todo.text;
-    li.querySelector('.item-meta').textContent = metaParts;
-    li.querySelector('.habit-btn').addEventListener('click', () => { // app.js:124 new
-      if (habits.some(h => h.name.toLowerCase() === todo.text.toLowerCase())) {
-        alert(`Habit "${todo.text}" already exists.`);
-        return;
-      }
-      habits.unshift({ id: Date.now().toString(), name: todo.text, completedDates: [], duration: todo.duration });
-      saveJSON(HABIT_KEY, habits);
-      renderHabits();
-    });
+    const pillGroup = li.querySelector('.pill-group');
+    if (dueLabel) { const s=document.createElement('span'); s.className='pill'; s.textContent=dueLabel; pillGroup.appendChild(s); }
+    if (durText) { const s=document.createElement('span'); s.className='pill'; s.textContent=durText; pillGroup.appendChild(s); }
+    if (isHabit) {
+      const s=document.createElement('span'); s.className='pill'; s.textContent='Habits'; pillGroup.appendChild(s);
+      li.querySelector('.habit-btn').remove();
+    } else {
+      li.querySelector('.habit-btn').addEventListener('click', () => {
+        if (habits.some(h => h.name.toLowerCase() === todo.text.toLowerCase())) {
+          alert(`Habit "${todo.text}" already exists.`);
+          return;
+        }
+        habits.unshift({ id: Date.now().toString(), name: todo.text, completedDates: [], duration: todo.duration });
+        saveJSON(HABIT_KEY, habits);
+        renderHabits();
+        renderTodos();
+      });
+    }
     const cb = li.querySelector('input');
     cb.addEventListener('change', () => {
       todo.completed = cb.checked;
